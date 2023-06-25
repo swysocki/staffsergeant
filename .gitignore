@@ -1,3 +1,3 @@
-_site
+/docs
 .venv
 .mypy_cache

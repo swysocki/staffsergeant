@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+  <head>
+    {% block title %}<title>{{ page_title }}</title>{% endblock %}
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/">Home</a>
+      </nav>
+      <h1>{{ blog_title }}</h1>
+    </header>
+    <main>
+  {% block content %}
+  {% endblock %}
+    </main>
+    <footer>
+    </footer>
+  </body>
+</html>
