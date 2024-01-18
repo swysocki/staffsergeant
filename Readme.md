@@ -1,4 +1,4 @@
-# SSG or Staff SerGeant (a Static Site Generator)
+# Staff Sergeant AKA SSG (a Static Site Generator)
 
 A Python-based static site generator that is compatible with Jekyll content.
 The main focus of SSG is for my blog, but it is easy enough to extend for
@@ -12,4 +12,4 @@ left up to the user.
 2. Create a Python Virtual Environment and install the dependencies
 3. Copy your blog posts to the `_posts` directory
 4. Run `python3 ssg.py` from the root of the project
-5. (Optional) View your website locally by running `python3 ssg.py render`
+5. (Optional) View your website locally by running `python3 -m http.server ./docs`
