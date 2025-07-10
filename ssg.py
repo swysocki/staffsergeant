@@ -67,11 +67,25 @@ class SSGBlog:
 
     def _create_posts(self):
         post_template = "post.html.j2"
-        for page in self.post_list:
+        num_posts = len(self.post_list)
+        for i, page in enumerate(self.post_list):
             pg = BlogPost(page)
             post_out_path = os.path.join(self.post_output, pg.html_filename)
             post_title = pg.front_matter.get("title")
             page_title = f"{self.blog_title}::{post_title}"
+
+            # Newer post
+            next_post_link = None
+            if i > 0:
+                next_post = BlogPost(self.post_list[i - 1])
+                next_post_link = os.path.join(".", str(next_post.html_filename))
+
+            # Older post
+            prev_post_link = None
+            if i < num_posts - 1:
+                prev_post = BlogPost(self.post_list[i + 1])
+                prev_post_link = os.path.join(".", str(prev_post.html_filename))
+
             env = Environment(loader=FileSystemLoader(self.templates))
             template = env.get_template(post_template)
             content = template.render(
@@ -79,6 +93,8 @@ class SSGBlog:
                 body_content=pg.html,
                 page_title=page_title,
                 post_date=pg.post_date,
+                prev_post=prev_post_link,
+                next_post=next_post_link,
             )
             with open(post_out_path, "w", encoding="utf-8") as file:
                 file.write(content)

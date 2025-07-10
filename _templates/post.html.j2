@@ -4,7 +4,15 @@
 <article>
 <h2>{{ post_title }}</h2>
 {{ body_content }}
-</article> 
-</body>
-</html
+</article>
+<nav>
+  <ul>
+    {% if prev_post %}
+    <li><a href="{{ prev_post }}">Previous</a></li>
+    {% endif %}
+    {% if next_post %}
+    <li><a href="{{ next_post }}">Next</a></li>
+    {% endif %}
+  </ul>
+</nav>
 {% endblock %}
