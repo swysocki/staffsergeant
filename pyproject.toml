@@ -1,0 +1,13 @@
+[project]
+name = "staffsergeant"
+version = "0.1.0"
+dependencies = [
+    "Jinja2",
+    "linkify-it-py",
+    "markdown-it-py",
+    "MarkupSafe",
+    "mdit-py-plugins",
+    "mdurl",
+    "PyYAML",
+    "uc-micro-py",
+]
