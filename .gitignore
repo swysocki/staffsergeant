@@ -1,3 +1,5 @@
 /docs
 .venv
 .mypy_cache
+dist/
+staffsergeant.egg-info/

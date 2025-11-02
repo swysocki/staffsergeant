@@ -4,6 +4,7 @@ Does just enough to generate a static website
 - Generate HTML from a folder of Markdown files
 - Insert the files into a template so they can be found
 """
+
 import glob
 import os
 import pathlib
@@ -26,7 +27,7 @@ class SSGBlog:
     """
 
     # TODO: make this a config file
-    web_root = "docs" # if using Github pages
+    web_root = "docs"  # if using Github pages
     styles = "_styles"
     templates = "_templates"
     index_page = "index.html"
