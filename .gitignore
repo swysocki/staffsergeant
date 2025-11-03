@@ -3,3 +3,4 @@
 .mypy_cache
 dist/
 staffsergeant.egg-info/
+pyrightconfig.json
