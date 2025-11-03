@@ -10,7 +10,8 @@ import os
 import pathlib
 import re
 import shutil
-import sys
+
+import typer
 
 from jinja2 import Environment, FileSystemLoader
 import yaml
@@ -53,6 +54,8 @@ class SSGBlog:
         index_list = []
         for page in self.post_list:
             page = BlogPost(page)
+            if not page.front_matter:
+                continue
             title = page.front_matter.get("title")
             href = os.path.join("posts", str(page.html_filename))
             index_list.append(
@@ -71,6 +74,8 @@ class SSGBlog:
         for page in self.post_list:
             pg = BlogPost(page)
             post_out_path = os.path.join(self.post_output, pg.html_filename)
+            if not pg.front_matter:
+                continue
             post_title = pg.front_matter.get("title")
             page_title = f"{self.blog_title}::{post_title}"
             env = Environment(loader=FileSystemLoader(self.templates))
@@ -127,13 +132,20 @@ class BlogPost:
         return ""
 
     @property
-    def front_matter(self):
-        "Frontmatter of post in YAML format"
+    def front_matter(self) -> dict | None:
+        """Frontmatter of post in YAML format
+
+        YAML frontmatter is mandatory as we set the title and other
+        attributes from there
+        """
         tokens = self._md.parse(self.post_text)
         for token in tokens:
             if token.type == "front_matter":
                 fm = yaml.safe_load(token.content)
                 return fm
+            else:
+                print(f"Error: missing frontmatter for post: {self.html_filename}")
+                return None
 
     @property
     def html(self):
@@ -141,11 +153,26 @@ class BlogPost:
         return self._md.render(self.post_text)
 
 
-def main():
+app = typer.Typer()
+
+@app.command()
+def initialize():
+    """
+    Initializes a new project directory.
+    """
+    print("Initialize command is not yet implemented.")
+
+@app.command()
+def generate():
+    """
+    Generate the static site.
+    """
     blog = SSGBlog(".")
     blog.generate()
-    return 0
+    print("Site generated successfully.")
 
+def main():
+    app()
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
