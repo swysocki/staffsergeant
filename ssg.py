@@ -155,12 +155,14 @@ class BlogPost:
 
 app = typer.Typer()
 
+
 @app.command()
 def initialize():
     """
     Initializes a new project directory.
     """
     print("Initialize command is not yet implemented.")
+
 
 @app.command()
 def generate():
@@ -171,8 +173,10 @@ def generate():
     blog.generate()
     print("Site generated successfully.")
 
+
 def main():
     app()
+
 
 if __name__ == "__main__":
     main()
