@@ -1,6 +1,7 @@
 [project]
 name = "staffsergeant"
-version = "0.1.0"
+dynamic = ["version"]
+
 dependencies = [
     "Jinja2",
     "linkify-it-py",
@@ -20,7 +21,7 @@ dev = ["ruff"]
 ssg = "ssg:main"
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools_scm[toml]>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
