@@ -11,5 +11,5 @@ left up to the user.
 1. Clone this project
 2. Create a Python Virtual Environment and install the dependencies
 3. Copy your blog posts to the `_posts` directory
-4. Run `python3 ssg.py` from the root of the project
+4. Run `python3 ssg.py generate` from the root of the project
 5. (Optional) View your website locally by running `python3 -m http.server ./docs`
