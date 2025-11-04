@@ -2,6 +2,8 @@
 #    uv pip compile pyproject.toml --extra dev -o requirements-dev.lock
 click==8.3.0
     # via typer
+iniconfig==2.3.0
+    # via pytest
 jinja2==3.1.6
     # via staffsergeant (pyproject.toml)
 linkify-it-py==2.0.3
@@ -21,8 +23,16 @@ mdurl==0.1.2
     # via
     #   staffsergeant (pyproject.toml)
     #   markdown-it-py
+packaging==25.0
+    # via pytest
+pluggy==1.6.0
+    # via pytest
 pygments==2.19.2
-    # via rich
+    # via
+    #   pytest
+    #   rich
+pytest==8.4.2
+    # via staffsergeant (pyproject.toml)
 pyyaml==6.0.3
     # via staffsergeant (pyproject.toml)
 rich==14.2.0

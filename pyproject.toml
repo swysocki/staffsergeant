@@ -1,6 +1,7 @@
 [project]
 name = "staffsergeant"
 dynamic = ["version"]
+requires-python = ">=3.12"
 
 dependencies = [
     "Jinja2",
@@ -15,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff"]
+dev = ["ruff", "pytest"]
 
 [project.scripts]
 ssg = "ssg:main"
