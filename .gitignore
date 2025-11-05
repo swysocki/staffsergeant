@@ -5,3 +5,4 @@ dist/
 staffsergeant.egg-info/
 pyrightconfig.json
 build/
+__pycache__

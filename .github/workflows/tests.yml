@@ -1,4 +1,4 @@
-name: Lint and Format
+name: Tests
 
 on: [pull_request]
 
@@ -25,3 +25,7 @@ jobs:
 
       - name: Lint code
         run: uv run ruff check .
+
+      - name: Run tests
+        run: uv run pytest
+
