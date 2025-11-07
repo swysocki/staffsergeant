@@ -5,6 +5,9 @@ Does just enough to generate a static website
 - Insert the files into a template so they can be found
 """
 
+import asyncio
+import aiofiles
+
 import glob
 import os
 import pathlib
@@ -38,18 +41,28 @@ class SSGBlog:
 
     def __init__(self, source_path: str):
         self.source_path = source_path
+        self.web_root = os.path.join(self.source_path, "docs")
+        self.post_output = os.path.join(self.web_root, "posts")
         pathlib.Path(self.web_root).mkdir(exist_ok=True)
         pathlib.Path(self.post_output).mkdir(exist_ok=True)
 
     @property
     def post_list(self):
-        """List of Markdown posts"""
+        """List of Markdown posts
+
+        List of all markdown files found in self.source_path
+        """
         posts_path = os.path.join(self.source_path, self.post_source)
         posts = list(glob.glob(os.path.join(posts_path, "*.md")))
         posts.sort(reverse=True)
         return posts
 
     def _create_index(self):
+        """Create the index page
+
+        Use self.post_list to create an index page for the site using the
+        front matter from each post to extract the title.
+        """
         index_template = "index.html.j2"
         index_list = []
         for page in self.post_list:
@@ -69,25 +82,30 @@ class SSGBlog:
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-    def _create_posts(self):
+    async def _create_posts(self, page: str) -> None:
+        """Creates each blog post page
+
+        Creates a BlogPost object from each page in the post_list. These
+        pages are then written to post_output path.
+        """
         post_template = "post.html.j2"
-        for page in self.post_list:
-            pg = BlogPost(page)
-            post_out_path = os.path.join(self.post_output, pg.html_filename)
-            if not pg.front_matter:
-                continue
-            post_title = pg.front_matter.get("title")
-            page_title = f"{self.blog_title}::{post_title}"
-            env = Environment(loader=FileSystemLoader(self.templates))
-            template = env.get_template(post_template)
-            content = template.render(
-                post_title=post_title,
-                body_content=pg.html,
-                page_title=page_title,
-                post_date=pg.post_date,
-            )
-            with open(post_out_path, "w", encoding="utf-8") as file:
-                file.write(content)
+        pg = BlogPost(page)
+        post_out_path = os.path.join(self.post_output, pg.html_filename)
+        if not pg.front_matter:
+            return
+        post_title = pg.front_matter.get("title")
+        page_title = f"{self.blog_title}::{post_title}"
+        env = Environment(loader=FileSystemLoader(self.templates))
+        template = env.get_template(post_template)
+        content = template.render(
+            post_title=post_title,
+            body_content=pg.html,
+            page_title=page_title,
+            post_date=pg.post_date,
+        )
+        async with aiofiles.open(post_out_path, "w", encoding="utf-8") as file:
+            print(f"writing file: {post_out_path}")
+            await file.write(content)
 
     def _create_styles(self):
         """Process CSS files if they exist"""
@@ -99,10 +117,11 @@ class SSGBlog:
             for file in css_files:
                 shutil.copy(file, styles_dir)
 
-    def generate(self):
+    async def generate(self):
         """Call all methods that create the website"""
         self._create_index()
-        self._create_posts()
+        tasks = [self._create_posts(page) for page in self.post_list]
+        await asyncio.gather(*tasks)
         self._create_styles()
 
 
@@ -170,7 +189,7 @@ def generate():
     Generate the static site.
     """
     blog = SSGBlog(".")
-    blog.generate()
+    asyncio.run(blog.generate())
     print("Site generated successfully.")
 
 
