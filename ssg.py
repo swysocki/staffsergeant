@@ -41,6 +41,8 @@ class SSGBlog:
 
     def __init__(self, source_path: str):
         self.source_path = source_path
+        self.web_root = os.path.join(self.source_path, "docs")
+        self.post_output = os.path.join(self.web_root, "posts")
         pathlib.Path(self.web_root).mkdir(exist_ok=True)
         pathlib.Path(self.post_output).mkdir(exist_ok=True)
 
