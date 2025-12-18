@@ -59,7 +59,10 @@ class SSGBlog:
 
         env = Environment(loader=FileSystemLoader(self.config.templates))
         template = env.get_template(index_template)
-        content = template.render(page_title=self.config.blog_title, post_list=index_list)
+        content = template.render(
+            page_title=self.config.blog_title,
+            post_list=index_list,
+        )
         index_path = os.path.join(self.config.web_root, self.config.index_page)
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(content)

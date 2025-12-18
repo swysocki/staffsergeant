@@ -19,11 +19,15 @@ dependencies = [
 dev = ["ruff", "pytest"]
 
 [project.scripts]
-ssg = "ssg:main"
+ssg = "staffsergeant.ssg:main"
 
 [build-system]
 requires = ["setuptools>=80", "setuptools_scm[simple]>=8.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+[tool.setuptools.packages.find]
+include = ["staffsergeant*"]
 
 [tool.ruff]
 exclude = ["build"]

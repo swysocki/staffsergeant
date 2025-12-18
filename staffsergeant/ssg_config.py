@@ -31,7 +31,11 @@ class Config:
             with open(path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
             # Only pass known dataclass fields to the constructor
-            valid: Dict[str, Any] = {k: v for k, v in data.items() if k in cls.__dataclass_fields__}
+            valid: Dict[str, Any] = {
+                k: v
+                for k, v in data.items()
+                if k in cls.__dataclass_fields__
+            }
             return cls(**valid)
         return cls()
 

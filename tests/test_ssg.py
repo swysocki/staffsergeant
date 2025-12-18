@@ -1,4 +1,4 @@
-from ssg import BlogPost
+from staffsergeant import BlogPost
 
 
 def test_blog_post_date(tmp_path):

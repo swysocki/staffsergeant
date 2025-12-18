@@ -1,8 +1,6 @@
-import os
-import tempfile
 import yaml
 
-from ssg_config import Config
+from staffsergeant import Config
 
 
 def test_defaults():
