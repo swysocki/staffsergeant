@@ -15,6 +15,7 @@ import typer
 
 from jinja2 import Environment, FileSystemLoader
 import yaml
+from ssg_config import Config
 from markdown_it import MarkdownIt
 from mdit_py_plugins.front_matter.index import front_matter_plugin
 
@@ -27,24 +28,18 @@ class SSGBlog:
     my posts.
     """
 
-    # TODO: make this a config file
-    web_root = "docs"  # if using Github pages
-    styles = "_styles"
-    templates = "_templates"
-    index_page = "index.html"
-    post_source = "_posts"
-    post_output = os.path.join(web_root, "posts")
-    blog_title = "My Blog"
+    # settings are loaded from a YAML config file via Config
 
-    def __init__(self, source_path: str):
+    def __init__(self, source_path: str, config: Config | None = None):
         self.source_path = source_path
-        pathlib.Path(self.web_root).mkdir(exist_ok=True)
-        pathlib.Path(self.post_output).mkdir(exist_ok=True)
+        self.config = config or Config.from_file()
+        pathlib.Path(self.config.web_root).mkdir(exist_ok=True)
+        pathlib.Path(self.config.post_output).mkdir(exist_ok=True)
 
     @property
     def post_list(self):
         """List of Markdown posts"""
-        posts_path = os.path.join(self.source_path, self.post_source)
+        posts_path = os.path.join(self.source_path, self.config.post_source)
         posts = list(glob.glob(os.path.join(posts_path, "*.md")))
         posts.sort(reverse=True)
         return posts
@@ -62,10 +57,10 @@ class SSGBlog:
                 {"post_title": title, "post_link": href, "date": page.post_date}
             )
 
-        env = Environment(loader=FileSystemLoader(self.templates))
+        env = Environment(loader=FileSystemLoader(self.config.templates))
         template = env.get_template(index_template)
-        content = template.render(page_title=self.blog_title, post_list=index_list)
-        index_path = os.path.join(self.web_root, self.index_page)
+        content = template.render(page_title=self.config.blog_title, post_list=index_list)
+        index_path = os.path.join(self.config.web_root, self.config.index_page)
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(content)
 
@@ -73,12 +68,12 @@ class SSGBlog:
         post_template = "post.html.j2"
         for page in self.post_list:
             pg = BlogPost(page)
-            post_out_path = os.path.join(self.post_output, pg.html_filename)
+            post_out_path = os.path.join(self.config.post_output, pg.html_filename)
             if not pg.front_matter:
                 continue
             post_title = pg.front_matter.get("title")
-            page_title = f"{self.blog_title}::{post_title}"
-            env = Environment(loader=FileSystemLoader(self.templates))
+            page_title = f"{self.config.blog_title}::{post_title}"
+            env = Environment(loader=FileSystemLoader(self.config.templates))
             template = env.get_template(post_template)
             content = template.render(
                 post_title=post_title,
@@ -91,8 +86,8 @@ class SSGBlog:
 
     def _create_styles(self):
         """Process CSS files if they exist"""
-        styles_dir = os.path.join(self.web_root, "styles")
-        css_files = glob.glob(os.path.join(self.styles, "*.css"))
+        styles_dir = os.path.join(self.config.web_root, "styles")
+        css_files = glob.glob(os.path.join(self.config.styles, "*.css"))
         if css_files:
             if not os.path.exists(styles_dir):
                 os.mkdir(styles_dir)

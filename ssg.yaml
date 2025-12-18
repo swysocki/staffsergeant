@@ -1,0 +1,7 @@
+web_root: docs
+styles: _styles
+templates: _templates
+index_page: index.html
+post_source: _posts
+post_output: docs/posts
+blog_title: My Blog
