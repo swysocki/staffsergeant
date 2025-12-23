@@ -5,4 +5,11 @@
             "scheme": "file"
         }
     ]
+    ,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true
+    },
+    "python.formatting.provider": "ruff",
+    "ruff.args": ["--fix"]
 }
