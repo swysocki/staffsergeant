@@ -1,4 +1,4 @@
-mr from ssg import BlogPost, SSGBlog
+from ssg import BlogPost, SSGBlog
 import os
 
 
@@ -64,9 +64,15 @@ def test_generate_creates_site(tmp_path, monkeypatch):
     post_file.write_text("---\ntitle: Sample Post\n---\n\n# Hello\n\nBody")
 
     # write templates
-    (templates / "base.html.j2").write_text("<html><head><title>{{ page_title }}</title></head><body>{% block content %}{% endblock %}</body></html>")
-    (templates / "index.html.j2").write_text("{% extends 'base.html.j2' %}{% block content %}<ul>{% for post in post_list %}<li><a href='{{ post.post_link }}'>{{ post.post_title }}</a></li>{% endfor %}</ul>{% endblock %}")
-    (templates / "post.html.j2").write_text("{% extends 'base.html.j2' %}{% block content %}<article><h2>{{ post_title }}</h2>{{ body_content }}</article>{% endblock %}")
+    (templates / "base.html.j2").write_text(
+        "<html><head><title>{{ page_title }}</title></head><body>{% block content %}{% endblock %}</body></html>"
+    )
+    (templates / "index.html.j2").write_text(
+        "{% extends 'base.html.j2' %}{% block content %}<ul>{% for post in post_list %}<li><a href='{{ post.post_link }}'>{{ post.post_title }}</a></li>{% endfor %}</ul>{% endblock %}"
+    )
+    (templates / "post.html.j2").write_text(
+        "{% extends 'base.html.j2' %}{% block content %}<article><h2>{{ post_title }}</h2>{{ body_content }}</article>{% endblock %}"
+    )
 
     # add a static file
     (static / "robots.txt").write_text("User-agent: *")

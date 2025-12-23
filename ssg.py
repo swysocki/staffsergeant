@@ -180,6 +180,7 @@ def initialize():
     """
     print("Initialize command is not yet implemented.")
 
+
 @app.command()
 def clean():
     """
@@ -190,6 +191,7 @@ def clean():
         print(f"Removed directory: {SSGBlog.web_root}")
     else:
         print(f"No generated site found at: {SSGBlog.web_root}")
+
 
 @app.command()
 def generate():
