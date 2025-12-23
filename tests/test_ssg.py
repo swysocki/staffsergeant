@@ -65,13 +65,25 @@ def test_generate_creates_site(tmp_path, monkeypatch):
 
     # write templates
     (templates / "base.html.j2").write_text(
-        "<html><head><title>{{ page_title }}</title></head><body>{% block content %}{% endblock %}</body></html>"
+        "<html><head><title>{{ page_title }}</title></head>"
+        "<body>{% block content %}{% endblock %}</body></html>"
     )
     (templates / "index.html.j2").write_text(
-        "{% extends 'base.html.j2' %}{% block content %}<ul>{% for post in post_list %}<li><a href='{{ post.post_link }}'>{{ post.post_title }}</a></li>{% endfor %}</ul>{% endblock %}"
+        "{% extends 'base.html.j2' %}{% block content %}"
+        "<ul>"
+        "{% for post in post_list %}"
+        "<li><a href='{{ post.post_link }}'>{{ post.post_title }}</a></li>"
+        "{% endfor %}"
+        "</ul>"
+        "{% endblock %}"
     )
     (templates / "post.html.j2").write_text(
-        "{% extends 'base.html.j2' %}{% block content %}<article><h2>{{ post_title }}</h2>{{ body_content }}</article>{% endblock %}"
+        "{% extends 'base.html.j2' %}{% block content %}"
+        "<article>"
+        "<h2>{{ post_title }}</h2>"
+        "{{ body_content }}"
+        "</article>"
+        "{% endblock %}"
     )
 
     # add a static file
