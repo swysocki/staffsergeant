@@ -10,6 +10,7 @@ import os
 import pathlib
 import re
 import shutil
+from tempfile import template
 
 import typer
 
@@ -89,21 +90,37 @@ class SSGBlog:
             with open(post_out_path, "w", encoding="utf-8") as file:
                 file.write(content)
 
-    def _create_styles(self):
-        """Process CSS files if they exist"""
-        styles_dir = os.path.join(self.web_root, "styles")
-        css_files = glob.glob(os.path.join(self.styles, "*.css"))
-        if css_files:
-            if not os.path.exists(styles_dir):
-                os.mkdir(styles_dir)
-            for file in css_files:
-                shutil.copy(file, styles_dir)
+    def copy_static_files(self):
+        """Copy static files to the web root"""
+        static_dir = os.path.join(self.source_path, "_static")
+        if os.path.exists(static_dir):
+            dest_dir = os.path.join(self.web_root, "static")
+            shutil.copytree(static_dir, dest_dir, dirs_exist_ok=True)
+
+    def create_project_page(self):
+        project_template = "project.html.j2"
+        # this doesn't need to iterate over all posts, only those with layout: project
+        # TODO: optimize this
+        for post in self.post_list:
+            pg = BlogPost(post)
+            post_out_path = os.path.join(self.web_root, pg.html_filename)
+            if pg.front_matter and "project" in pg.front_matter.get("layout", ""):
+                env = Environment(loader=FileSystemLoader(self.templates))
+                template = env.get_template(project_template)
+                content = template.render(
+                    post_title=pg.front_matter.get("title"),
+                    body_content=pg.html,
+                    page_title=f"{self.blog_title}::{pg.front_matter.get('title')}",
+                )
+                with open(post_out_path, "w", encoding="utf-8") as file:
+                    file.write(content)
 
     def generate(self):
         """Call all methods that create the website"""
         self._create_index()
         self._create_posts()
-        self._create_styles()
+        self.create_project_page()
+        self.copy_static_files()
 
 
 class BlogPost:
@@ -163,6 +180,16 @@ def initialize():
     """
     print("Initialize command is not yet implemented.")
 
+@app.command()
+def clean():
+    """
+    Clean the generated site.
+    """
+    if os.path.exists(SSGBlog.web_root):
+        shutil.rmtree(SSGBlog.web_root)
+        print(f"Removed directory: {SSGBlog.web_root}")
+    else:
+        print(f"No generated site found at: {SSGBlog.web_root}")
 
 @app.command()
 def generate():
