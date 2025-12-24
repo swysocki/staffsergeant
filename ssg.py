@@ -74,7 +74,7 @@ class SSGBlog:
         for page in self.post_list:
             pg = BlogPost(page)
             post_out_path = os.path.join(self.post_output, pg.html_filename)
-            if not pg.front_matter:
+            if not pg.front_matter or "post" not in pg.front_matter.get("layout", ""):
                 continue
             post_title = pg.front_matter.get("title")
             page_title = f"{self.blog_title}::{post_title}"
