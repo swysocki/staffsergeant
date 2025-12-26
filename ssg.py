@@ -10,7 +10,6 @@ from typing import Optional
 import glob
 import os
 import pathlib
-import re
 import shutil
 
 import typer
@@ -55,17 +54,19 @@ class SSGBlog:
         index_template = "index.html.j2"
         index_list = []
         for page in self.post_list:
-            page = BlogPost(page)
-            # only add posts with layout: post to the index
-            if not page.front_matter or "post" not in page.front_matter.get(
-                "layout", ""
-            ):
+            # Prefer strict BlogPost parsing
+            try:
+                pg = BlogPost.from_markdown(page)
+            except InvalidBlogPostError as err:
+                print(f"Skipping post {page}: {err}")
                 continue
-            title = page.front_matter.get("title")
-            href = os.path.join("posts", str(page.html_filename))
-            index_list.append(
-                {"post_title": title, "post_link": href, "date": page.date}
-            )
+
+            # only add posts with layout: post to the index
+            if "post" not in (pg.layout or ""):
+                continue
+            title = pg.title
+            href = os.path.join("posts", f"{pg.slug}.html")
+            index_list.append({"post_title": title, "post_link": href, "date": pg.date})
 
         env = Environment(loader=FileSystemLoader(self.templates))
         template = env.get_template(index_template)
@@ -77,20 +78,26 @@ class SSGBlog:
     def _create_posts(self):
         post_template = "post.html.j2"
         for page in self.post_list:
-            pg = BlogPost(page)
-            post_out_path = os.path.join(self.post_output, pg.html_filename)
-            if not pg.front_matter or "post" not in pg.front_matter.get("layout", ""):
+            try:
+                pg = BlogPost.from_markdown(page)
+            except InvalidBlogPostError as err:
+                print(f"Skipping post {page}: {err}")
                 continue
-            post_title = pg.front_matter.get("title")
+
+            # only create HTML for posts with layout 'post'
+            if "post" not in (pg.layout or ""):
+                continue
+            post_title = pg.title
             page_title = f"{self.blog_title}::{post_title}"
             env = Environment(loader=FileSystemLoader(self.templates))
             template = env.get_template(post_template)
             content = template.render(
                 post_title=post_title,
-                body_content=pg.html,
+                body_content=pg.content,
                 page_title=page_title,
                 post_date=pg.date,
             )
+            post_out_path = os.path.join(self.post_output, f"{pg.slug}.html")
             with open(post_out_path, "w", encoding="utf-8") as file:
                 file.write(content)
 
@@ -109,15 +116,20 @@ class SSGBlog:
         # and run from the _create_posts method above.
         # TODO: test removal of this method
         for post in self.post_list:
-            pg = BlogPost(post)
-            post_out_path = os.path.join(self.web_root, pg.html_filename)
-            if pg.front_matter and "project" in pg.front_matter.get("layout", ""):
+            try:
+                pg = BlogPost.from_markdown(post)
+            except InvalidBlogPostError as err:
+                print(f"Skipping post {post}: {err}")
+                continue
+
+            post_out_path = os.path.join(self.web_root, f"{pg.slug}.html")
+            if "project" in (pg.layout or ""):
                 env = Environment(loader=FileSystemLoader(self.templates))
                 template = env.get_template(project_template)
                 content = template.render(
-                    post_title=pg.front_matter.get("title"),
-                    body_content=pg.html,
-                    page_title=f"{self.blog_title}::{pg.front_matter.get('title')}",
+                    post_title=pg.title,
+                    body_content=pg.content,
+                    page_title=f"{self.blog_title}::{pg.title}",
                 )
                 with open(post_out_path, "w", encoding="utf-8") as file:
                     file.write(content)
@@ -130,55 +142,8 @@ class SSGBlog:
         self.copy_static_files()
 
 
-class BlogPost:
-    """BlogPost class represent a single markdown post and its attributes"""
-
-    post_extension = ".html"
-
-    def __init__(self, markdown_post: str):
-        self.md_path = pathlib.Path(markdown_post)
-        self.html_filename = pathlib.Path(self.md_path.stem).with_suffix(
-            self.post_extension
-        )
-        self.post_text = self.md_path.read_text(encoding="utf-8")
-        self._md = (
-            MarkdownIt("commonmark", {"breaks": False, "html": True})
-            .use(front_matter_plugin)
-            .enable("table")
-        )
-
-    @property
-    def date(self) -> str:
-        date_re = r"(\d{4}-\d{2}-\d{2})"
-        result = re.match(date_re, self.md_path.stem)
-        if result:
-            return result.group()
-        return ""
-
-    @property
-    def front_matter(self) -> dict | None:
-        """Frontmatter of post in YAML format
-
-        YAML frontmatter is mandatory as we set the title and other
-        attributes from there
-        """
-        tokens = self._md.parse(self.post_text)
-        for token in tokens:
-            if token.type == "front_matter":
-                fm = yaml.safe_load(token.content)
-                return fm
-            else:
-                print(f"Error: missing frontmatter for post: {self.html_filename}")
-                return None
-
-    @property
-    def html(self) -> str:
-        """HTML body of a BlogPost"""
-        return self._md.render(self.post_text)
-
-
 @dataclass
-class BlogPost2:
+class BlogPost:
     """BlogPost class represent a single markdown post and its attributes"""
 
     title: str
@@ -190,7 +155,7 @@ class BlogPost2:
     source_path: str = ""
 
     @classmethod
-    def from_markdown(cls, filepath: str) -> "BlogPost2":
+    def from_markdown(cls, filepath: str) -> "BlogPost":
         md_path = pathlib.Path(filepath)
         post_text = md_path.read_text(encoding="utf-8")
         md = (

@@ -1,4 +1,4 @@
-from ssg import BlogPost, SSGBlog, BlogPost2
+from ssg import BlogPost, SSGBlog
 import os
 
 # write a test for the new BlogPost2
@@ -10,11 +10,19 @@ def test_blog_post_date(tmp_path):
     """
     # Arrange
     p = tmp_path / "2025-11-01-test-post.md"
-    p.write_text("---\ntitle: Test Post\n---\n\nHello, world.")
-    post = BlogPost(p)
+    p.write_text(
+        "---\n"
+        "title: Test Post\n"
+        "date: 2025-11-01\n"
+        "layout: post\n"
+        "slug: 2025-11-01-test-post\n"
+        "---\n\n"
+        "Hello, world."
+    )
+    post = BlogPost.from_markdown(str(p))
 
     # Act
-    actual_date = post.date
+    actual_date = str(post.date)
 
     # Assert
     assert actual_date == "2025-11-01"
@@ -26,25 +34,41 @@ def test_blog_post_front_matter(tmp_path):
     """
     # Arrange
     p = tmp_path / "test-post.md"
-    p.write_text("---\ntitle: My Test Title\nauthor: John Doe\n---\n\nPost content.")
-    post = BlogPost(p)
+    p.write_text(
+        "---\n"
+        "title: My Test Title\n"
+        "author: John Doe\n"
+        "date: 2025-01-01\n"
+        "layout: post\n"
+        "slug: test-post\n"
+        "---\n\n"
+        "Post content."
+    )
+    post = BlogPost.from_markdown(str(p))
 
     # Act
-    front_matter = post.front_matter
-
+    # The new dataclass exposes parsed fields directly
     # Assert
-    assert front_matter == {"title": "My Test Title", "author": "John Doe"}
+    assert post.title == "My Test Title"
 
 
 def test_blog_post_html(tmp_path):
     """Given a markdown file, the html property should return the rendered HTML."""
     # Arrange
     p = tmp_path / "test-post.md"
-    p.write_text("---\ntitle: Test\n---\n\n# A Heading\n\nSome text.")
-    post = BlogPost(p)
+    p.write_text(
+        "---\n"
+        "title: Test\n"
+        "date: 2025-01-02\n"
+        "layout: post\n"
+        "slug: test-post\n"
+        "---\n\n"
+        "# A Heading\n\nSome text."
+    )
+    post = BlogPost.from_markdown(str(p))
 
     # Act
-    html = post.html
+    html = post.content
 
     # Assert
     assert "<h1>A Heading</h1>" in html
@@ -64,7 +88,14 @@ def test_generate_creates_site(tmp_path, monkeypatch):
     # write a simple post
     post_file = posts / "2025-12-20-sample.md"
     post_file.write_text(
-        "---\ntitle: Sample Post\nlayout: post\n---\n\n# Hello\n\nBody"
+        "---\n"
+        "title: Sample Post\n"
+        "date: 2025-12-20\n"
+        "layout: post\n"
+        "slug: 2025-12-20-sample\n"
+        "---\n\n"
+        "# Hello\n\n"
+        "Body"
     )
 
     # write templates
@@ -160,11 +191,27 @@ def test_create_project_page(tmp_path, monkeypatch):
 
     # project post (should create a page)
     proj = posts / "2025-12-21-project.md"
-    proj.write_text("---\ntitle: Project One\nlayout: project\n---\n\nProject details")
+    proj.write_text(
+        "---\n"
+        "title: Project One\n"
+        "date: 2025-12-21\n"
+        "layout: project\n"
+        "slug: 2025-12-21-project\n"
+        "---\n\n"
+        "Project details"
+    )
 
     # non-project post (should be ignored by create_project_page)
     other = posts / "2025-12-22-post.md"
-    other.write_text("---\ntitle: Other Post\nlayout: post\n---\n\nRegular post")
+    other.write_text(
+        "---\n"
+        "title: Other Post\n"
+        "date: 2025-12-22\n"
+        "layout: post\n"
+        "slug: 2025-12-22-post\n"
+        "---\n\n"
+        "Regular post"
+    )
 
     # templates
     (templates / "base.html.j2").write_text(
@@ -190,7 +237,7 @@ def test_create_project_page(tmp_path, monkeypatch):
     assert not os.path.exists(other_out)
 
 
-def test_blogpost2_from_markdown_with_frontmatter(tmp_path):
+def test_blogpost_from_markdown_with_frontmatter(tmp_path):
     p = tmp_path / "2025-12-25-bp2.md"
     p.write_text(
         "---\n"
@@ -204,7 +251,7 @@ def test_blogpost2_from_markdown_with_frontmatter(tmp_path):
         "Body text"
     )
 
-    bp = BlogPost2.from_markdown(str(p))
+    bp = BlogPost.from_markdown(str(p))
     assert bp.title == "BP2 Title"
     # YAML may parse dates into date objects; normalize via str()
     assert str(bp.date) == "2025-12-25"
@@ -214,16 +261,16 @@ def test_blogpost2_from_markdown_with_frontmatter(tmp_path):
     assert bp.source_path == str(p)
 
 
-def test_blogpost2_from_markdown_no_frontmatter(tmp_path):
+def test_blogpost_from_markdown_no_frontmatter(tmp_path):
     p = tmp_path / "no-front.md"
     p.write_text("# Hello\n\nNo front matter here")
     import pytest
 
     with pytest.raises(Exception):
-        BlogPost2.from_markdown(str(p))
+        BlogPost.from_markdown(str(p))
 
 
-def test_blogpost2_missing_mandatory_fields(tmp_path):
+def test_blogpost_missing_mandatory_fields(tmp_path):
     p = tmp_path / "missing.md"
     # front matter exists but missing title and slug
     p.write_text("---\ndate: 2025-12-26\nlayout: post\n---\n\nContent")
@@ -231,4 +278,4 @@ def test_blogpost2_missing_mandatory_fields(tmp_path):
     import pytest
 
     with pytest.raises(Exception):
-        BlogPost2.from_markdown(str(p))
+        BlogPost.from_markdown(str(p))
