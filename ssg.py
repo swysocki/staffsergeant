@@ -5,6 +5,8 @@ Does just enough to generate a static website
 - Insert the files into a template so they can be found
 """
 
+from dataclasses import dataclass
+from typing import Optional
 import glob
 import os
 import pathlib
@@ -54,12 +56,15 @@ class SSGBlog:
         index_list = []
         for page in self.post_list:
             page = BlogPost(page)
-            if not page.front_matter:
+            # only add posts with layout: post to the index
+            if not page.front_matter or "post" not in page.front_matter.get(
+                "layout", ""
+            ):
                 continue
             title = page.front_matter.get("title")
             href = os.path.join("posts", str(page.html_filename))
             index_list.append(
-                {"post_title": title, "post_link": href, "date": page.post_date}
+                {"post_title": title, "post_link": href, "date": page.date}
             )
 
         env = Environment(loader=FileSystemLoader(self.templates))
@@ -84,7 +89,7 @@ class SSGBlog:
                 post_title=post_title,
                 body_content=pg.html,
                 page_title=page_title,
-                post_date=pg.post_date,
+                post_date=pg.date,
             )
             with open(post_out_path, "w", encoding="utf-8") as file:
                 file.write(content)
@@ -100,6 +105,9 @@ class SSGBlog:
         project_template = "project.html.j2"
         # this doesn't need to iterate over all posts, only those with layout: project
         # TODO: optimize this
+        # this doesn't actaully need to exist. It can be treated like a regular page
+        # and run from the _create_posts method above.
+        # TODO: test removal of this method
         for post in self.post_list:
             pg = BlogPost(post)
             post_out_path = os.path.join(self.web_root, pg.html_filename)
@@ -140,7 +148,7 @@ class BlogPost:
         )
 
     @property
-    def post_date(self) -> str:
+    def date(self) -> str:
         date_re = r"(\d{4}-\d{2}-\d{2})"
         result = re.match(date_re, self.md_path.stem)
         if result:
@@ -164,9 +172,65 @@ class BlogPost:
                 return None
 
     @property
-    def html(self):
+    def html(self) -> str:
         """HTML body of a BlogPost"""
         return self._md.render(self.post_text)
+
+
+@dataclass
+class BlogPost2:
+    """BlogPost class represent a single markdown post and its attributes"""
+
+    title: str
+    date: str
+    layout: str
+    slug: str
+    content: str = ""
+    excerpt: Optional[str] = None
+    source_path: str = ""
+
+    @classmethod
+    def from_markdown(cls, filepath: str) -> "BlogPost2":
+        md_path = pathlib.Path(filepath)
+        post_text = md_path.read_text(encoding="utf-8")
+        md = (
+            MarkdownIt("commonmark", {"breaks": False, "html": True})
+            .use(front_matter_plugin)
+            .enable("table")
+        )
+        tokens = md.parse(post_text)
+        front_matter = {}
+        for token in tokens:
+            if token.type == "front_matter":
+                front_matter = yaml.safe_load(token.content) or {}
+                break
+        content = md.render(post_text)
+
+        if not front_matter:
+            raise InvalidBlogPostError(f"Missing front matter in {filepath}")
+
+        missing = [
+            k for k in ("title", "date", "layout", "slug") if not front_matter.get(k)
+        ]
+        if missing:
+            raise InvalidBlogPostError(
+                f"Missing mandatory front matter fields {missing} in {filepath}"
+            )
+
+        return cls(
+            title=str(front_matter.get("title")),
+            date=str(front_matter.get("date")),
+            layout=str(front_matter.get("layout")),
+            slug=str(front_matter.get("slug")),
+            content=content,
+            source_path=filepath,
+        )
+
+
+class InvalidBlogPostError(Exception):
+    """Raised when a markdown post is missing required front matter."""
+
+    pass
 
 
 app = typer.Typer()

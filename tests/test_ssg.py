@@ -1,5 +1,7 @@
-from ssg import BlogPost, SSGBlog
+from ssg import BlogPost, SSGBlog, BlogPost2
 import os
+
+# write a test for the new BlogPost2
 
 
 def test_blog_post_date(tmp_path):
@@ -12,7 +14,7 @@ def test_blog_post_date(tmp_path):
     post = BlogPost(p)
 
     # Act
-    actual_date = post.post_date
+    actual_date = post.date
 
     # Assert
     assert actual_date == "2025-11-01"
@@ -186,3 +188,47 @@ def test_create_project_page(tmp_path, monkeypatch):
 
     assert os.path.exists(proj_out)
     assert not os.path.exists(other_out)
+
+
+def test_blogpost2_from_markdown_with_frontmatter(tmp_path):
+    p = tmp_path / "2025-12-25-bp2.md"
+    p.write_text(
+        "---\n"
+        "title: BP2 Title\n"
+        "date: 2025-12-25\n"
+        "layout: post\n"
+        "slug: bp2-sample\n"
+        "excerpt: Short excerpt\n"
+        "---\n\n"
+        "# Heading\n\n"
+        "Body text"
+    )
+
+    bp = BlogPost2.from_markdown(str(p))
+    assert bp.title == "BP2 Title"
+    # YAML may parse dates into date objects; normalize via str()
+    assert str(bp.date) == "2025-12-25"
+    assert bp.layout == "post"
+    assert bp.slug == "bp2-sample"
+    assert "Body text" in bp.content
+    assert bp.source_path == str(p)
+
+
+def test_blogpost2_from_markdown_no_frontmatter(tmp_path):
+    p = tmp_path / "no-front.md"
+    p.write_text("# Hello\n\nNo front matter here")
+    import pytest
+
+    with pytest.raises(Exception):
+        BlogPost2.from_markdown(str(p))
+
+
+def test_blogpost2_missing_mandatory_fields(tmp_path):
+    p = tmp_path / "missing.md"
+    # front matter exists but missing title and slug
+    p.write_text("---\ndate: 2025-12-26\nlayout: post\n---\n\nContent")
+
+    import pytest
+
+    with pytest.raises(Exception):
+        BlogPost2.from_markdown(str(p))
