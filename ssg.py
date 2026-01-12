@@ -12,12 +12,10 @@ import os
 import pathlib
 import shutil
 
+import markdown
 import typer
 
 from jinja2 import Environment, FileSystemLoader
-import yaml
-from markdown_it import MarkdownIt
-from mdit_py_plugins.front_matter.index import front_matter_plugin
 
 
 class SSGBlog:
@@ -158,18 +156,20 @@ class BlogPost:
     def from_markdown(cls, filepath: str) -> "BlogPost":
         md_path = pathlib.Path(filepath)
         post_text = md_path.read_text(encoding="utf-8")
-        md = (
-            MarkdownIt("commonmark", {"breaks": False, "html": True})
-            .use(front_matter_plugin)
-            .enable("table")
-        )
-        tokens = md.parse(post_text)
+
+        # Create markdown instance with meta extension for front matter
+        md = markdown.Markdown(extensions=["meta", "tables"])
+
+        # Convert markdown to HTML (this also parses the metadata)
+        content = md.convert(post_text)
+
+        # Extract front matter from meta attribute
         front_matter = {}
-        for token in tokens:
-            if token.type == "front_matter":
-                front_matter = yaml.safe_load(token.content) or {}
-                break
-        content = md.render(post_text)
+        if hasattr(md, "Meta"):
+            # python-markdown returns metadata values as lists
+            for key, value in md.Meta.items():
+                # Join list values or take first item
+                front_matter[key] = value[0] if len(value) == 1 else " ".join(value)
 
         if not front_matter:
             raise InvalidBlogPostError(f"Missing front matter in {filepath}")
