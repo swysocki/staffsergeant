@@ -1,5 +1,7 @@
 from ssg import BlogPost, SSGBlog
 import os
+import pytest
+
 
 # write a test for the new BlogPost2
 
@@ -264,7 +266,6 @@ def test_blogpost_from_markdown_with_frontmatter(tmp_path):
 def test_blogpost_from_markdown_no_frontmatter(tmp_path):
     p = tmp_path / "no-front.md"
     p.write_text("# Hello\n\nNo front matter here")
-    import pytest
 
     with pytest.raises(Exception):
         BlogPost.from_markdown(str(p))
@@ -274,8 +275,6 @@ def test_blogpost_missing_mandatory_fields(tmp_path):
     p = tmp_path / "missing.md"
     # front matter exists but missing title and slug
     p.write_text("---\ndate: 2025-12-26\nlayout: post\n---\n\nContent")
-
-    import pytest
 
     with pytest.raises(Exception):
         BlogPost.from_markdown(str(p))

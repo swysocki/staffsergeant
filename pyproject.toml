@@ -5,13 +5,7 @@ requires-python = ">=3.12"
 
 dependencies = [
     "Jinja2",
-    "linkify-it-py",
-    "markdown-it-py",
-    "MarkupSafe",
-    "mdit-py-plugins",
-    "mdurl",
-    "PyYAML",
-    "uc-micro-py",
+    "markdown",
     "typer",
 ]
 
